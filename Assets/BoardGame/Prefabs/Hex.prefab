@@ -127,9 +127,9 @@ MonoBehaviour:
   emptyMaterial: {fileID: 2100000, guid: ac60026cc0a82614fb5d18b67ee5bac7, type: 2}
   playerAMaterial: {fileID: 2100000, guid: e32a16407160e9d47b6195764b9c4eac, type: 2}
   playerBMaterial: {fileID: 2100000, guid: 1ec536e20f29f7a4e994e57cff177687, type: 2}
-  tigerPrefab: {fileID: 0}
-  rabbitPrefab: {fileID: 0}
-  dragonPrefab: {fileID: 0}
+  tigerPrefab: {fileID: 3929410730413006183, guid: 8b8043f300fc9874cbb9b3c3fb98db06, type: 3}
+  rabbitPrefab: {fileID: 507032077596633080, guid: c2b2b59746d5f1c40b0bb0cea0e5923f, type: 3}
+  dragonPrefab: {fileID: 398700048123235846, guid: 01fa3041b59b4274dbc0fcd4c80a224b, type: 3}
   playerAOutlineColor: {r: 0, g: 0, b: 1, a: 1}
   playerBOutlineColor: {r: 1, g: 0, b: 0, a: 1}
   outlineWidth: 0.05
