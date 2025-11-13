@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
@@ -17,11 +18,11 @@ public class GameManager : MonoBehaviour
     public Button btnTiger;
     public Button btnRabbit;
     public Button btnDragon;
-    public Text txtCurrentPlayer;
-    public Text txtScoreA;
-    public Text txtScoreB;
+    public TextMeshProUGUI txtCurrentPlayer;
+    public TextMeshProUGUI txtScoreA;
+    public TextMeshProUGUI txtScoreB;
     public GameObject victoryPanel;
-    public Text txtVictoryMessage;
+    public TextMeshProUGUI txtVictoryMessage;
     public Button btnRestart;
     public GameObject modeSelectionPanel;
     public Button btnPvP;
@@ -254,8 +255,8 @@ public class GameManager : MonoBehaviour
         int scoreA = board.Values.Count(t => t.Owner == Player.PlayerA);
         int scoreB = board.Values.Count(t => t.Owner == Player.PlayerB);
         
-        txtScoreA.text = $"Player A: {scoreA}";
-        txtScoreB.text = $"Player B: {scoreB}";
+        txtScoreA.text = $"{scoreA}";
+        txtScoreB.text = $"{scoreB}";
     }
 
     private void CheckGameEnd()
