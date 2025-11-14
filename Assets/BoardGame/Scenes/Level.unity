@@ -182,6 +182,27 @@ MonoBehaviour:
   modeSelectionPanel: {fileID: 442225722}
   btnPvP: {fileID: 1757959422}
   btnVsAI: {fileID: 641038232}
+  enablePlacementAnimation: 1
+  enableFlipAnimation: 1
+  enableUIAnimation: 1
+  enableCameraShake: 1
+  enableCameraZoom: 1
+  enableParticles: 1
+  enableSounds: 1
+  placementDuration: 0.4
+  flipDuration: 0.35
+  uiAnimDuration: 0.25
+  delayBetweenFlips: 0.05
+  shakeStrength: 0.2
+  shakeDuration: 0.3
+  zoomAmount: 0.8
+  zoomDuration: 0.3
+  placementSound: {fileID: 0}
+  flipSound: {fileID: 0}
+  captureSound: {fileID: 0}
+  buttonClickSound: {fileID: 0}
+  placementParticles: {fileID: 0}
+  captureParticles: {fileID: 0}
 --- !u!1 &55261224
 GameObject:
   m_ObjectHideFlags: 0
@@ -219,7 +240,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.128}
   m_AnchorMax: {x: 0.5, y: 0.128}
-  m_AnchoredPosition: {x: 0, y: -0.000030517578}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 1666.175, y: 278.503}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &55261226
@@ -459,7 +480,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.312, y: 0.208}
   m_AnchorMax: {x: 0.312, y: 0.208}
-  m_AnchoredPosition: {x: 0.2590027, y: -1}
+  m_AnchoredPosition: {x: 0.2590332, y: -1}
   m_SizeDelta: {x: 302.867, y: 44.852}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &146494245
@@ -2426,7 +2447,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.8943233, y: 0.208}
   m_AnchorMax: {x: 0.8943233, y: 0.208}
-  m_AnchoredPosition: {x: 0, y: -1.1089935}
+  m_AnchoredPosition: {x: 0, y: -1.1090088}
   m_SizeDelta: {x: 57.707, y: 44.852}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1741929270
