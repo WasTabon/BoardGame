@@ -3,13 +3,15 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using DG.Tweening;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
     [Header("Game Setup")]
-    public int boardRadius = 3; // 3 for 7x7, 4 for 9x9
+    public int boardRadius = 3;
     public GameObject hexTilePrefab;
     public float hexSize = 1f;
     public Transform boardParent;
@@ -28,12 +30,46 @@ public class GameManager : MonoBehaviour
     public Button btnPvP;
     public Button btnVsAI;
 
+    [Header("Animation Settings")]
+    [SerializeField] private bool enablePlacementAnimation = true;
+    [SerializeField] private bool enableFlipAnimation = true;
+    [SerializeField] private bool enableUIAnimation = true;
+    [SerializeField] private bool enableCameraShake = true;
+    [SerializeField] private bool enableCameraZoom = true;
+    [SerializeField] private bool enableParticles = true;
+    [SerializeField] private bool enableSounds = true;
+
+    [Header("Animation Timing")]
+    [SerializeField] private float placementDuration = 0.4f;
+    [SerializeField] private float flipDuration = 0.35f;
+    [SerializeField] private float uiAnimDuration = 0.25f;
+    [SerializeField] private float delayBetweenFlips = 0.05f;
+
+    [Header("Camera Animation")]
+    [SerializeField] private float shakeStrength = 0.2f;
+    [SerializeField] private float shakeDuration = 0.3f;
+    [SerializeField] private float zoomAmount = 0.8f;
+    [SerializeField] private float zoomDuration = 0.3f;
+
+    [Header("Audio & Effects")]
+    [SerializeField] private AudioClip placementSound;
+    [SerializeField] private AudioClip flipSound;
+    [SerializeField] private AudioClip captureSound;
+    [SerializeField] private AudioClip buttonClickSound;
+    [SerializeField] private GameObject placementParticles;
+    [SerializeField] private GameObject captureParticles;
+
     [Header("Game State")]
     private Dictionary<HexCoordinates, HexTile> board = new Dictionary<HexCoordinates, HexTile>();
     private Player currentPlayer = Player.PlayerA;
     private AnimalType selectedAnimal = AnimalType.Tiger;
     private bool isAIMode = false;
     private bool gameEnded = false;
+    private bool isAnimating = false;
+
+    private Camera mainCamera;
+    private Vector3 originalCameraPosition;
+    private float originalCameraSize;
 
     private void Awake()
     {
@@ -45,6 +81,13 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            originalCameraPosition = mainCamera.transform.position;
+            originalCameraSize = mainCamera.orthographicSize;
+        }
+
         SetupUI();
         ShowModeSelection();
     }
@@ -58,33 +101,75 @@ public class GameManager : MonoBehaviour
         btnPvP.onClick.AddListener(() => StartGame(false));
         btnVsAI.onClick.AddListener(() => StartGame(true));
 
+        // Добавляем анимацию ко всем кнопкам
+        if (enableUIAnimation)
+        {
+            AddButtonAnimation(btnTiger);
+            AddButtonAnimation(btnRabbit);
+            AddButtonAnimation(btnDragon);
+            AddButtonAnimation(btnRestart);
+            AddButtonAnimation(btnPvP);
+            AddButtonAnimation(btnVsAI);
+        }
+
         SelectAnimal(AnimalType.Tiger);
         victoryPanel.SetActive(false);
+    }
+
+    private void AddButtonAnimation(Button button)
+    {
+        button.onClick.AddListener(() =>
+        {
+            PlaySound(buttonClickSound);
+            button.transform.DOScale(0.9f, uiAnimDuration * 0.5f)
+                .SetEase(Ease.OutQuad)
+                .OnComplete(() =>
+                {
+                    button.transform.DOScale(1f, uiAnimDuration * 0.5f).SetEase(Ease.OutBack);
+                });
+        });
     }
 
     private void ShowModeSelection()
     {
         modeSelectionPanel.SetActive(true);
+        if (enableUIAnimation)
+        {
+            modeSelectionPanel.transform.localScale = Vector3.zero;
+            modeSelectionPanel.transform.DOScale(1f, uiAnimDuration * 2f).SetEase(Ease.OutBack);
+        }
     }
 
     private void StartGame(bool aiMode)
     {
         isAIMode = aiMode;
-        modeSelectionPanel.SetActive(false);
-        GenerateBoard();
-        SetupStartingPositions();
-        UpdateUI();
+        
+        if (enableUIAnimation)
+        {
+            modeSelectionPanel.transform.DOScale(0f, uiAnimDuration).SetEase(Ease.InBack).OnComplete(() =>
+            {
+                modeSelectionPanel.SetActive(false);
+                GenerateBoard();
+                SetupStartingPositions();
+                UpdateUI();
+            });
+        }
+        else
+        {
+            modeSelectionPanel.SetActive(false);
+            GenerateBoard();
+            SetupStartingPositions();
+            UpdateUI();
+        }
     }
 
     private void GenerateBoard()
     {
         board.Clear();
         
-        // Очистка старых тайлов
         foreach (Transform child in boardParent)
             Destroy(child.gameObject);
 
-        // Генерация гексагональной сетки
         for (int q = -boardRadius; q <= boardRadius; q++)
         {
             int r1 = Mathf.Max(-boardRadius, -q - boardRadius);
@@ -102,6 +187,16 @@ public class GameManager : MonoBehaviour
                 {
                     tile.coordinates = coord;
                     board[coord] = tile;
+
+                    // Анимация появления доски
+                    if (enablePlacementAnimation)
+                    {
+                        tile.transform.localScale = Vector3.zero;
+                        float delay = Vector3.Distance(position, Vector3.zero) * 0.02f;
+                        tile.transform.DOScale(1f, placementDuration * 0.8f)
+                            .SetDelay(delay)
+                            .SetEase(Ease.OutBack);
+                    }
                 }
             }
         }
@@ -116,16 +211,12 @@ public class GameManager : MonoBehaviour
 
     private void SetupStartingPositions()
     {
-        // Стартовая позиция 2x2 в центре
-        // A🐇 B🐉
-        // B🐅 A🐅
-        
         HexCoordinates[] startPositions = new HexCoordinates[]
         {
-            new HexCoordinates(0, 0),   // A Tiger
-            new HexCoordinates(1, 0),   // B Tiger
-            new HexCoordinates(0, -1),  // A Rabbit
-            new HexCoordinates(1, -1)   // B Dragon
+            new HexCoordinates(0, 0),
+            new HexCoordinates(1, 0),
+            new HexCoordinates(0, -1),
+            new HexCoordinates(1, -1)
         };
 
         Player[] startPlayers = new Player[] { Player.PlayerA, Player.PlayerB, Player.PlayerA, Player.PlayerB };
@@ -144,47 +235,113 @@ public class GameManager : MonoBehaviour
     {
         selectedAnimal = animal;
         
-        // Визуальная индикация выбранной кнопки
-        btnTiger.GetComponent<Image>().color = animal == AnimalType.Tiger ? Color.yellow : Color.white;
-        btnRabbit.GetComponent<Image>().color = animal == AnimalType.Rabbit ? Color.yellow : Color.white;
-        btnDragon.GetComponent<Image>().color = animal == AnimalType.Dragon ? Color.yellow : Color.white;
+        UpdateAnimalButtonVisuals(btnTiger, animal == AnimalType.Tiger);
+        UpdateAnimalButtonVisuals(btnRabbit, animal == AnimalType.Rabbit);
+        UpdateAnimalButtonVisuals(btnDragon, animal == AnimalType.Dragon);
+    }
+
+    private void UpdateAnimalButtonVisuals(Button button, bool selected)
+    {
+        Image img = button.GetComponent<Image>();
+        Color targetColor = selected ? Color.yellow : Color.white;
+        
+        if (enableUIAnimation)
+        {
+            img.DOColor(targetColor, uiAnimDuration);
+            if (selected)
+            {
+                button.transform.DOPunchScale(Vector3.one * 0.2f, uiAnimDuration, 5, 0.5f);
+            }
+        }
+        else
+        {
+            img.color = targetColor;
+        }
     }
 
     public void OnTileClicked(HexTile tile)
     {
-        if (gameEnded) return;
-        if (isAIMode && currentPlayer == Player.PlayerB) return; // AI's turn
+        if (gameEnded || isAnimating) return;
+        if (isAIMode && currentPlayer == Player.PlayerB) return;
         if (!tile.IsEmpty) return;
 
-        PlacePiece(tile, currentPlayer, selectedAnimal);
+        StartCoroutine(PlacePieceWithAnimation(tile, currentPlayer, selectedAnimal));
     }
 
-    private void PlacePiece(HexTile tile, Player player, AnimalType animal)
+    private IEnumerator PlacePieceWithAnimation(HexTile tile, Player player, AnimalType animal)
     {
-        // 1. Разместить фишку
+        isAnimating = true;
+
+        // 1. Анимация размещения фишки
         tile.SetState(player, animal);
+        
+        if (enablePlacementAnimation)
+        {
+            yield return StartCoroutine(tile.PlayPlacementAnimation(placementDuration));
+        }
 
-        // 2. Outflank captures
+        PlaySound(placementSound);
+        SpawnParticles(placementParticles, tile.transform.position);
+
+        // 2. Получаем захваченные фишки
         List<HexTile> outflankedTiles = GetOutflankedTiles(tile.coordinates, player);
-        foreach (var t in outflankedTiles)
-            t.FlipOwner(player);
-
-        // 3. Dominance captures
         List<HexTile> dominatedTiles = GetDominatedTiles(tile.coordinates, player, animal);
-        foreach (var t in dominatedTiles)
-            t.FlipOwner(player);
+        List<HexTile> allCaptured = new List<HexTile>();
+        allCaptured.AddRange(outflankedTiles);
+        allCaptured.AddRange(dominatedTiles);
 
-        // 4. Смена хода
+        // 3. Анимация захвата
+        if (allCaptured.Count > 0)
+        {
+            if (enableCameraShake && mainCamera != null)
+            {
+                mainCamera.transform.DOShakePosition(shakeDuration, shakeStrength, 10, 90, false, true);
+            }
+
+            PlaySound(captureSound);
+
+            if (enableFlipAnimation)
+            {
+                foreach (var capturedTile in allCaptured)
+                {
+                    StartCoroutine(capturedTile.PlayFlipAnimation(player, flipDuration));
+                    SpawnParticles(captureParticles, capturedTile.transform.position);
+                    yield return new WaitForSeconds(delayBetweenFlips);
+                }
+            }
+            else
+            {
+                foreach (var capturedTile in allCaptured)
+                {
+                    capturedTile.FlipOwner(player);
+                }
+            }
+        }
+
+        // 4. Zoom эффект для важных ходов
+        if (enableCameraZoom && allCaptured.Count >= 3 && mainCamera != null)
+        {
+            float targetSize = originalCameraSize * zoomAmount;
+            mainCamera.DOOrthoSize(targetSize, zoomDuration * 0.5f).SetEase(Ease.OutQuad).OnComplete(() =>
+            {
+                mainCamera.DOOrthoSize(originalCameraSize, zoomDuration * 0.5f).SetEase(Ease.InQuad);
+            });
+        }
+
+        // 5. Обновление UI и смена хода
         SwitchPlayer();
         UpdateUI();
 
-        // 5. Проверка конца игры
+        // 6. Проверка конца игры
         CheckGameEnd();
 
-        // 6. AI ход если нужно
+        isAnimating = false;
+
+        // 7. AI ход
         if (isAIMode && currentPlayer == Player.PlayerB && !gameEnded)
         {
-            Invoke(nameof(AITurn), 1f);
+            yield return new WaitForSeconds(0.5f);
+            StartCoroutine(AITurnCoroutine());
         }
     }
 
@@ -198,7 +355,6 @@ public class GameManager : MonoBehaviour
             List<HexTile> line = new List<HexTile>();
             HexCoordinates current = placed + dir;
 
-            // Собираем вражеские фишки в направлении
             while (board.TryGetValue(current, out HexTile tile))
             {
                 if (tile.Owner == Player.None)
@@ -211,7 +367,6 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    // Нашли свою фишку - все между ними захвачены
                     captured.AddRange(line);
                     break;
                 }
@@ -255,25 +410,48 @@ public class GameManager : MonoBehaviour
         int scoreA = board.Values.Count(t => t.Owner == Player.PlayerA);
         int scoreB = board.Values.Count(t => t.Owner == Player.PlayerB);
         
-        txtScoreA.text = $"{scoreA}";
-        txtScoreB.text = $"{scoreB}";
+        if (enableUIAnimation)
+        {
+            AnimateScoreChange(txtScoreA, scoreA);
+            AnimateScoreChange(txtScoreB, scoreB);
+        }
+        else
+        {
+            txtScoreA.text = $"{scoreA}";
+            txtScoreB.text = $"{scoreB}";
+        }
+    }
+
+    private void AnimateScoreChange(TextMeshProUGUI scoreText, int newScore)
+    {
+        int currentScore = int.Parse(scoreText.text);
+        if (currentScore != newScore)
+        {
+            scoreText.transform.DOPunchScale(Vector3.one * 0.3f, uiAnimDuration, 5, 0.5f);
+        }
+        
+        DOTween.To(() => currentScore, x =>
+        {
+            currentScore = x;
+            scoreText.text = currentScore.ToString();
+        }, newScore, uiAnimDuration);
     }
 
     private void CheckGameEnd()
     {
-        // Проверка: есть ли пустые клетки
         bool hasEmptyTiles = board.Values.Any(t => t.IsEmpty);
 
         if (!hasEmptyTiles)
         {
-            EndGame();
+            StartCoroutine(EndGameWithAnimation());
         }
     }
 
-    private void EndGame()
+    private IEnumerator EndGameWithAnimation()
     {
         gameEnded = true;
-        
+        yield return new WaitForSeconds(0.5f);
+
         int scoreA = board.Values.Count(t => t.Owner == Player.PlayerA);
         int scoreB = board.Values.Count(t => t.Owner == Player.PlayerB);
 
@@ -281,30 +459,70 @@ public class GameManager : MonoBehaviour
         txtVictoryMessage.text = $"{winner}\nScore: {scoreA} - {scoreB}";
         
         victoryPanel.SetActive(true);
+
+        if (enableUIAnimation)
+        {
+            victoryPanel.transform.localScale = Vector3.zero;
+            victoryPanel.transform.DOScale(1f, uiAnimDuration * 2f).SetEase(Ease.OutElastic);
+        }
     }
 
-    private void AITurn()
+    private IEnumerator AITurnCoroutine()
     {
-        // Простой AI: случайный валидный ход
+        isAnimating = true;
+        yield return new WaitForSeconds(0.3f);
+
         List<HexTile> emptyTiles = board.Values.Where(t => t.IsEmpty).ToList();
         
         if (emptyTiles.Count == 0)
         {
-            EndGame();
-            return;
+            yield return StartCoroutine(EndGameWithAnimation());
+            isAnimating = false;
+            yield break;
         }
 
         HexTile randomTile = emptyTiles[Random.Range(0, emptyTiles.Count)];
         AnimalType randomAnimal = (AnimalType)Random.Range(1, 4);
 
-        PlacePiece(randomTile, Player.PlayerB, randomAnimal);
+        yield return StartCoroutine(PlacePieceWithAnimation(randomTile, Player.PlayerB, randomAnimal));
     }
 
     private void RestartGame()
     {
         gameEnded = false;
         currentPlayer = Player.PlayerA;
-        victoryPanel.SetActive(false);
-        ShowModeSelection();
+        
+        if (enableUIAnimation)
+        {
+            victoryPanel.transform.DOScale(0f, uiAnimDuration).SetEase(Ease.InBack).OnComplete(() =>
+            {
+                victoryPanel.SetActive(false);
+                ShowModeSelection();
+            });
+        }
+        else
+        {
+            victoryPanel.SetActive(false);
+            ShowModeSelection();
+        }
     }
+
+    private void PlaySound(AudioClip clip)
+    {
+        if (enableSounds && clip != null && MusicController.Instance != null)
+        {
+            MusicController.Instance.PlaySpecificSound(clip);
+        }
+    }
+
+    private void SpawnParticles(GameObject particlePrefab, Vector3 position)
+    {
+        if (enableParticles && particlePrefab != null)
+        {
+            GameObject particles = Instantiate(particlePrefab, position + Vector3.up * 0.5f, Quaternion.identity);
+            Destroy(particles, 2f);
+        }
+    }
+
+    public bool IsAnimating => isAnimating;
 }
