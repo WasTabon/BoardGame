@@ -226,7 +226,7 @@ public class GameManager : MonoBehaviour
         {
             if (board.TryGetValue(startPositions[i], out HexTile tile))
             {
-                tile.SetState(startPlayers[i], startAnimals[i]);
+                tile.SetState(startPlayers[i], startAnimals[i], isInitial: true); // Тепер передаємо прапорець
             }
         }
     }

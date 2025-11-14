@@ -29,7 +29,12 @@ public class HexTile : MonoBehaviour
     [SerializeField] private float hoverDuration = 0.2f;
 
     [Header("Animal Positioning")]
-    [SerializeField] private float animalHeightOffset = 0f; // Додаткове зміщення якщо потрібно
+    [SerializeField] private float animalHeightOffset = 0f;
+    
+    [Header("Initial Animal Y Offsets")]
+    [SerializeField] private float initialTigerYOffset = 0f;
+    [SerializeField] private float initialRabbitYOffset = 0f;
+    [SerializeField] private float initialDragonYOffset = 0f;
 
     // State
     private Player owner = Player.None;
@@ -37,6 +42,7 @@ public class HexTile : MonoBehaviour
     private GameObject currentAnimal;
     private Vector3 originalScale;
     private bool isHovered = false;
+    private bool isInitialAnimal = false; // Чи це стартова тварина
 
     public Player Owner => owner;
     public AnimalType Animal => animalType;
@@ -50,10 +56,11 @@ public class HexTile : MonoBehaviour
         originalScale = transform.localScale;
     }
 
-    public void SetState(Player newOwner, AnimalType animal)
+    public void SetState(Player newOwner, AnimalType animal, bool isInitial = false)
     {
         owner = newOwner;
         animalType = animal;
+        isInitialAnimal = isInitial;
         UpdateVisuals();
     }
 
@@ -69,24 +76,19 @@ public class HexTile : MonoBehaviour
     {
         if (currentAnimal == null) yield break;
 
-        // Отримуємо правильну позицію на поверхні тайла
-        Vector3 finalPosition = GetAnimalGroundPosition();
-        
-        // Анімація "падення з неба"
+        yield return new WaitForSeconds(0.1f);
+
+        Vector3 finalPosition = currentAnimal.transform.position;
         Vector3 startPos = finalPosition + Vector3.up * 5f;
         
         currentAnimal.transform.position = startPos;
         currentAnimal.transform.localScale = Vector3.zero;
 
-        // Падення
         currentAnimal.transform.DOMove(finalPosition, duration * 0.7f).SetEase(Ease.OutBounce);
-        
-        // Появление с вращением
         currentAnimal.transform.DOScale(Vector3.one, duration * 0.7f).SetEase(Ease.OutBack);
         currentAnimal.transform.DORotate(new Vector3(0, 360, 0), duration * 0.7f, RotateMode.FastBeyond360)
             .SetEase(Ease.OutQuad);
 
-        // Пульсация тайла
         tileRenderer.transform.DOPunchScale(Vector3.one * 0.2f, duration * 0.5f, 5, 0.5f);
 
         yield return new WaitForSeconds(duration);
@@ -96,39 +98,38 @@ public class HexTile : MonoBehaviour
     {
         if (currentAnimal == null) yield break;
 
+        Vector3 currentCorrectPosition = currentAnimal.transform.position;
+
         owner = newOwner;
 
-        // Flip анимация на 180 градусов по Y
         Vector3 middleScale = new Vector3(0.1f, 1f, 1f);
         
         Sequence flipSequence = DOTween.Sequence();
         
-        // Сжатие
         flipSequence.Append(currentAnimal.transform.DOScale(middleScale, duration * 0.5f).SetEase(Ease.InQuad));
         
-        // Смена визуала в середине
         flipSequence.AppendCallback(() =>
         {
             UpdateOutline();
             UpdateTileMaterial();
+            currentAnimal.transform.position = currentCorrectPosition;
         });
         
-        // Расширение
         flipSequence.Append(currentAnimal.transform.DOScale(Vector3.one, duration * 0.5f).SetEase(Ease.OutBack));
         
-        // Вращение
         currentAnimal.transform.DORotate(new Vector3(0, 180, 0), duration, RotateMode.FastBeyond360)
             .SetEase(Ease.InOutQuad)
             .SetRelative(true);
 
         yield return flipSequence.WaitForCompletion();
+        
+        currentAnimal.transform.position = currentCorrectPosition;
     }
 
     private void UpdateVisuals()
     {
         UpdateTileMaterial();
         UpdateAnimal();
-        UpdateOutline();
     }
 
     private void UpdateTileMaterial()
@@ -164,102 +165,104 @@ public class HexTile : MonoBehaviour
 
         if (prefab != null)
         {
-            // Створюємо тварину на правильній висоті
-            Vector3 spawnPosition = GetAnimalGroundPosition(prefab);
-            currentAnimal = Instantiate(prefab, spawnPosition, Quaternion.identity, transform);
+            Vector3 tempPosition = transform.position + Vector3.up * 2f;
+            currentAnimal = Instantiate(prefab, tempPosition, Quaternion.identity, transform);
+            
+            StartCoroutine(PositionAnimalAfterPhysicsUpdate());
+        }
+    }
+
+    private IEnumerator PositionAnimalAfterPhysicsUpdate()
+    {
+        yield return new WaitForFixedUpdate();
+        yield return new WaitForFixedUpdate();
+        
+        if (currentAnimal != null)
+        {
+            Vector3 correctPosition = GetAnimalGroundPosition();
+            currentAnimal.transform.position = correctPosition;
+            
+            Debug.Log($"[{animalType}] Final correct position: {correctPosition}");
+            
             UpdateOutline();
         }
     }
 
-    private Vector3 GetAnimalGroundPosition(GameObject prefab = null)
-{
-    // Отримуємо верхню точку тайла
-    Vector3 tileTop = transform.position;
-    
-    if (tileRenderer != null)
+    private Vector3 GetAnimalGroundPosition()
     {
-        // Використовуємо bounds рендерера щоб знайти верхню точку
-        tileTop.y = tileRenderer.bounds.max.y;
-    }
-
-    Debug.Log($"Tile top Y: {tileTop.y}");
-
-    // Знаходимо найнижчу точку колайдера тварини
-    float animalBottomOffset = 0f;
-
-    if (currentAnimal != null)
-    {
-        animalBottomOffset = GetAnimalBottomOffset(currentAnimal);
-    }
-    else if (prefab != null)
-    {
-        // Якщо тварини ще немає, робимо попереднє інстанціювання для вимірювання
-        GameObject tempAnimal = Instantiate(prefab, Vector3.zero, Quaternion.identity);
-        animalBottomOffset = GetAnimalBottomOffset(tempAnimal);
-        Destroy(tempAnimal);
-    }
-
-    Debug.Log($"Animal bottom offset: {animalBottomOffset}");
-
-    // ВИПРАВЛЕННЯ: віднімаємо offset замість додавання
-    tileTop.y -= animalBottomOffset;
-
-    // Додаємо користувацьке зміщення
-    tileTop.y += animalHeightOffset;
-
-    Debug.Log($"Final position Y: {tileTop.y}");
-
-    return tileTop;
-}
-
-private float GetAnimalBottomOffset(GameObject animal)
-{
-    // Шукаємо всі Box Collider на тварині та її дочірніх об'єктах
-    BoxCollider[] colliders = animal.GetComponentsInChildren<BoxCollider>();
-    
-    if (colliders.Length == 0)
-    {
-        Debug.LogWarning($"No BoxCollider found on animal {animal.name}. Animal positioning may be incorrect.");
-        return 0f;
-    }
-
-    Debug.Log($"Found {colliders.Length} colliders on {animal.name}");
-
-    // Знаходимо найнижчу точку серед всіх колайдерів
-    float lowestPoint = float.MaxValue;
-    
-    foreach (var collider in colliders)
-    {
-        // Отримуємо bounds колайдера в world space
-        Bounds bounds = collider.bounds;
-        float bottomY = bounds.min.y;
+        Vector3 tileTop = transform.position;
         
-        Debug.Log($"Collider {collider.name}: center={collider.bounds.center.y}, min={bottomY}");
-        
-        if (bottomY < lowestPoint)
+        if (tileRenderer != null)
         {
-            lowestPoint = bottomY;
+            tileTop.y = tileRenderer.bounds.max.y;
         }
-    }
 
-    // Повертаємо відстань від найнижчої точки до центру тварини
-    if (lowestPoint != float.MaxValue)
-    {
-        float offset = lowestPoint - animal.transform.position.y;
-        Debug.Log($"Lowest point: {lowestPoint}, Animal center: {animal.transform.position.y}, Offset: {offset}");
-        return offset;
-    }
+        Debug.Log($"[{animalType}] Tile top Y: {tileTop.y}");
 
-    Debug.Log("No valid collider bounds found");
-    
-    return 0f;
-}
+        if (currentAnimal == null)
+        {
+            return tileTop;
+        }
+
+        // Для стартових тварин використовуємо прості офсети
+        if (isInitialAnimal)
+        {
+            float yOffset = animalType switch
+            {
+                AnimalType.Tiger => initialTigerYOffset,
+                AnimalType.Rabbit => initialRabbitYOffset,
+                AnimalType.Dragon => initialDragonYOffset,
+                _ => 0f
+            };
+
+            Vector3 finalPosition = tileTop;
+            finalPosition.y = tileTop.y + yOffset;
+
+            Debug.Log($"[{animalType}] Initial animal - using simple offset: {yOffset}, final Y: {finalPosition.y}");
+
+            return finalPosition;
+        }
+
+        // Для тварин що створюються під час гри - використовуємо складну логіку з колайдерами
+        float lowestWorldY = float.MaxValue;
+        BoxCollider[] colliders = currentAnimal.GetComponentsInChildren<BoxCollider>();
+        
+        if (colliders.Length == 0)
+        {
+            Debug.LogWarning($"No BoxCollider on {animalType}!");
+            return tileTop;
+        }
+
+        foreach (var collider in colliders)
+        {
+            float colliderBottom = collider.bounds.min.y;
+            Debug.Log($"[{animalType}] Collider '{collider.name}': bounds.min.y = {colliderBottom}");
+            
+            if (colliderBottom < lowestWorldY)
+            {
+                lowestWorldY = colliderBottom;
+            }
+        }
+
+        Debug.Log($"[{animalType}] Lowest world Y: {lowestWorldY}");
+        Debug.Log($"[{animalType}] Animal center Y: {currentAnimal.transform.position.y}");
+
+        float offsetFromCenter = currentAnimal.transform.position.y - lowestWorldY;
+        
+        Debug.Log($"[{animalType}] Offset from center: {offsetFromCenter}");
+
+        Vector3 finalPos = tileTop;
+        finalPos.y = tileTop.y + offsetFromCenter + animalHeightOffset;
+
+        Debug.Log($"[{animalType}] Final position Y: {finalPos.y}");
+
+        return finalPos;
+    }
 
     private void UpdateOutline()
     {
         if (currentAnimal == null || owner == Player.None) return;
 
-        // Перевіряємо всі рендерери (включно з дочірніми)
         Renderer[] allRenderers = currentAnimal.GetComponentsInChildren<Renderer>();
         Color outlineColor = owner == Player.PlayerA ? playerAOutlineColor : playerBOutlineColor;
         
@@ -329,7 +332,6 @@ private float GetAnimalBottomOffset(GameObject animal)
 
     private void OnDestroy()
     {
-        // Очищаем все tweens связанные с этим объектом
         transform.DOKill();
         if (currentAnimal != null)
             currentAnimal.transform.DOKill();
