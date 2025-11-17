@@ -8,7 +8,7 @@ public class TouchInput : MonoBehaviour
     private Transform cameraTransform;
     
     [Header("Pan Settings")]
-    [SerializeField] private float panSpeed = 0.003f; // Зменшено в ~7 разів для нормальної чутливості
+    [SerializeField] private float panSpeed = 0.003f;
     [SerializeField] private float panSmoothTime = 0.1f;
     [SerializeField] private float mobileSwipeThreshold = 30f;
     [SerializeField] private float pcSwipeThreshold = 5f;
@@ -20,8 +20,7 @@ public class TouchInput : MonoBehaviour
     [SerializeField] private float scrollZoomSpeed = 0.5f;
     
     [Header("Board Bounds")]
-    [SerializeField] private float hexSize = 1f; // Має бути такий же як в GameManager
-    [SerializeField] private float boundsPadding = 2f; // Відступ від країв сітки
+    [SerializeField] private float boundsPadding = 2f;
     
     private Vector3 targetCameraPosition;
     private Vector3 cameraPanVelocity;
@@ -42,7 +41,6 @@ public class TouchInput : MonoBehaviour
     private float initialPinchDistance;
     private bool isPinching = false;
     
-    // Межі сітки
     private Vector2 boardBoundsMin;
     private Vector2 boardBoundsMax;
     private bool boundsCalculated = false;
@@ -69,13 +67,13 @@ public class TouchInput : MonoBehaviour
     {
         if (boundsCalculated) return;
         
-        // Чекаємо поки GameManager створить дошку
         if (GameManager.Instance == null) return;
         
         int radius = GameManager.Instance.boardRadius;
         if (radius <= 0) return;
         
-        // Розрахунок меж шестикутної сітки
+        float hexSize = GameManager.Instance.HexSize;
+        
         float maxX = 0f;
         float maxZ = 0f;
         
@@ -286,28 +284,21 @@ public class TouchInput : MonoBehaviour
 
     private void PanCamera(Vector2 screenDelta)
     {
-        // Конвертуємо screen delta в world space з врахуванням rotation камери
-        // Використовуємо право та вперед камери для правильних осей
-        
         float zoomFactor = targetZoom * panSpeed;
         
-        // Отримуємо напрямки камери на площині XZ
         Vector3 cameraRight = cameraTransform.right;
         Vector3 cameraForward = cameraTransform.forward;
         
-        // Проектуємо на площину XZ (y=0)
         cameraRight.y = 0;
         cameraForward.y = 0;
         cameraRight.Normalize();
         cameraForward.Normalize();
         
-        // Рухаємо камеру відносно її орієнтації
         Vector3 move = (-cameraRight * screenDelta.x - cameraForward * screenDelta.y) * zoomFactor;
         
         targetCameraPosition += move;
         targetCameraPosition.y = initialCameraY;
         
-        // Застосовуємо межі
         if (boundsCalculated)
         {
             targetCameraPosition.x = Mathf.Clamp(targetCameraPosition.x, boardBoundsMin.x, boardBoundsMax.x);

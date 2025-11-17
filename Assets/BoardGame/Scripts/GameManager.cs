@@ -13,7 +13,6 @@ public class GameManager : MonoBehaviour
     [Header("Game Setup")]
     public int boardRadius = 3;
     public GameObject hexTilePrefab;
-    public float hexSize = 1f;
     public Transform boardParent;
 
     [Header("UI References")]
@@ -67,6 +66,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject placementParticles;
     [SerializeField] private GameObject captureParticles;
 
+    [Header("Hex Spacing")]
+    [SerializeField] private float hexSpacingMultiplier = 1.05f; // Додатковий відступ між тайлами (5%)
+
     [Header("Game State")]
     private Dictionary<HexCoordinates, HexTile> board = new Dictionary<HexCoordinates, HexTile>();
     private Player currentPlayer = Player.PlayerA;
@@ -76,10 +78,13 @@ public class GameManager : MonoBehaviour
     private bool isAnimating = false;
     private int minFieldSize = 1;
     private int maxFieldSize = 5;
+    private float calculatedHexSize = 1f; // Автоматично розрахований розмір
 
     private Camera mainCamera;
     private Vector3 originalCameraPosition;
     private float originalCameraSize;
+
+    public float HexSize => calculatedHexSize; // Публічний доступ для інших скриптів
 
     private void Awake()
     {
@@ -98,8 +103,64 @@ public class GameManager : MonoBehaviour
             originalCameraSize = mainCamera.orthographicSize;
         }
 
+        CalculateHexSize();
         SetupUI();
         ShowInitialPanels();
+    }
+
+    private void CalculateHexSize()
+    {
+        if (hexTilePrefab == null)
+        {
+            Debug.LogError("HexTilePrefab is not assigned!");
+            calculatedHexSize = 1f;
+            return;
+        }
+
+        // Створюємо тимчасовий об'єкт для вимірювання
+        GameObject tempHex = Instantiate(hexTilePrefab, Vector3.zero, Quaternion.identity);
+        
+        // Шукаємо MeshFilter або MeshRenderer
+        MeshFilter meshFilter = tempHex.GetComponent<MeshFilter>();
+        MeshRenderer meshRenderer = tempHex.GetComponent<MeshRenderer>();
+        
+        if (meshRenderer != null)
+        {
+            // Використовуємо bounds renderer'а
+            Bounds bounds = meshRenderer.bounds;
+            
+            // Для правильного hexagon spacing потрібна відстань від центру до вершини
+            // Це максимальна з ширини або глибини
+            float width = bounds.size.x;
+            float depth = bounds.size.z;
+            
+            // Для flat-top hexagon (як у нас) беремо більшу з координат
+            calculatedHexSize = Mathf.Max(width, depth) / 2f;
+            
+            // Додаємо spacing multiplier для запобігання накладанню
+            calculatedHexSize *= hexSpacingMultiplier;
+            
+            Debug.Log($"Calculated hex size: {calculatedHexSize} (bounds: {width}x{depth})");
+        }
+        else if (meshFilter != null && meshFilter.sharedMesh != null)
+        {
+            // Якщо є тільки MeshFilter
+            Bounds bounds = meshFilter.sharedMesh.bounds;
+            float width = bounds.size.x * tempHex.transform.localScale.x;
+            float depth = bounds.size.z * tempHex.transform.localScale.z;
+            
+            calculatedHexSize = Mathf.Max(width, depth) / 2f;
+            calculatedHexSize *= hexSpacingMultiplier;
+            
+            Debug.Log($"Calculated hex size from mesh: {calculatedHexSize}");
+        }
+        else
+        {
+            Debug.LogWarning("Could not find MeshFilter or MeshRenderer on hex prefab. Using default size.");
+            calculatedHexSize = 1f;
+        }
+        
+        Destroy(tempHex);
     }
 
     private void SetupUI()
@@ -267,8 +328,9 @@ public class GameManager : MonoBehaviour
 
     private Vector3 HexToWorld(HexCoordinates hex)
     {
-        float x = hexSize * (Mathf.Sqrt(3f) * hex.q + Mathf.Sqrt(3f) / 2f * hex.r);
-        float z = hexSize * (3f / 2f * hex.r);
+        // Використовуємо розрахований розмір hex
+        float x = calculatedHexSize * (Mathf.Sqrt(3f) * hex.q + Mathf.Sqrt(3f) / 2f * hex.r);
+        float z = calculatedHexSize * (3f / 2f * hex.r);
         return new Vector3(x, 0, z);
     }
 

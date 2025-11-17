@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: c56e28e54cac24b04ae3dd957d214534, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 8b7dd0809c7c6498789fa32a61eaa6cb, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -168,7 +168,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   boardRadius: 3
   hexTilePrefab: {fileID: 6584024417247321680, guid: 96de5d3c49822c54f9b079ab4466c7ea, type: 3}
-  hexSize: 1
   boardParent: {fileID: 1373107544}
   btnTiger: {fileID: 79753194}
   btnRabbit: {fileID: 1926399233}
@@ -209,6 +208,7 @@ MonoBehaviour:
   buttonClickSound: {fileID: 0}
   placementParticles: {fileID: 0}
   captureParticles: {fileID: 0}
+  hexSpacingMultiplier: 1.05
 --- !u!1 &17051112
 GameObject:
   m_ObjectHideFlags: 0
@@ -672,8 +672,7 @@ MonoBehaviour:
   zoomSmoothTime: 0.15
   pcZoomStep: 0.1
   scrollZoomSpeed: 0.5
-  hexSize: 1
-  boundsPadding: 2
+  boundsPadding: 5
 --- !u!1 &146494243
 GameObject:
   m_ObjectHideFlags: 0
@@ -4092,7 +4091,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.1654188, y: 0.8274815}
   m_AnchorMax: {x: 0.1654188, y: 0.8274815}
-  m_AnchoredPosition: {x: 1, y: -0.6499939}
+  m_AnchoredPosition: {x: 1, y: -0.6499634}
   m_SizeDelta: {x: 484.34595, y: 229.492}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2067706917
