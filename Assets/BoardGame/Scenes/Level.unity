@@ -182,6 +182,12 @@ MonoBehaviour:
   modeSelectionPanel: {fileID: 442225722}
   btnPvP: {fileID: 1757959422}
   btnVsAI: {fileID: 641038232}
+  currentPlayerPanel: {fileID: 2067706915}
+  animalSelectionPanel: {fileID: 55261224}
+  fieldSizeChoosePanel: {fileID: 17051112}
+  txtFieldSize: {fileID: 41307144}
+  btnFieldSizePlus: {fileID: 1916659469}
+  btnFieldSizeMinus: {fileID: 1156067387}
   enablePlacementAnimation: 1
   enableFlipAnimation: 1
   enableUIAnimation: 1
@@ -658,6 +664,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70ec563de2a8d054c8488572e9ce351c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  panSpeed: 0.003
+  panSmoothTime: 0.1
+  mobileSwipeThreshold: 30
+  pcSwipeThreshold: 5
+  zoomSpeed: 1
+  zoomSmoothTime: 0.15
+  pcZoomStep: 0.1
+  scrollZoomSpeed: 0.5
+  hexSize: 1
+  boundsPadding: 2
 --- !u!1 &146494243
 GameObject:
   m_ObjectHideFlags: 0

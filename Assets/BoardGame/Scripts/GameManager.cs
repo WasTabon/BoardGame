@@ -29,6 +29,14 @@ public class GameManager : MonoBehaviour
     public GameObject modeSelectionPanel;
     public Button btnPvP;
     public Button btnVsAI;
+    public GameObject currentPlayerPanel;
+    public GameObject animalSelectionPanel;
+    
+    [Header("Field Size Panel")]
+    public GameObject fieldSizeChoosePanel;
+    public TextMeshProUGUI txtFieldSize;
+    public Button btnFieldSizePlus;
+    public Button btnFieldSizeMinus;
 
     [Header("Animation Settings")]
     [SerializeField] private bool enablePlacementAnimation = true;
@@ -66,6 +74,8 @@ public class GameManager : MonoBehaviour
     private bool isAIMode = false;
     private bool gameEnded = false;
     private bool isAnimating = false;
+    private int minFieldSize = 1;
+    private int maxFieldSize = 5;
 
     private Camera mainCamera;
     private Vector3 originalCameraPosition;
@@ -89,7 +99,7 @@ public class GameManager : MonoBehaviour
         }
 
         SetupUI();
-        ShowModeSelection();
+        ShowInitialPanels();
     }
 
     private void SetupUI()
@@ -100,8 +110,10 @@ public class GameManager : MonoBehaviour
         btnRestart.onClick.AddListener(RestartGame);
         btnPvP.onClick.AddListener(() => StartGame(false));
         btnVsAI.onClick.AddListener(() => StartGame(true));
+        
+        btnFieldSizePlus.onClick.AddListener(() => ChangeFieldSize(1));
+        btnFieldSizeMinus.onClick.AddListener(() => ChangeFieldSize(-1));
 
-        // Добавляем анимацию ко всем кнопкам
         if (enableUIAnimation)
         {
             AddButtonAnimation(btnTiger);
@@ -110,10 +122,47 @@ public class GameManager : MonoBehaviour
             AddButtonAnimation(btnRestart);
             AddButtonAnimation(btnPvP);
             AddButtonAnimation(btnVsAI);
+            AddButtonAnimation(btnFieldSizePlus);
+            AddButtonAnimation(btnFieldSizeMinus);
         }
 
         SelectAnimal(AnimalType.Tiger);
         victoryPanel.SetActive(false);
+        currentPlayerPanel.SetActive(false);
+        animalSelectionPanel.SetActive(false);
+    }
+
+    private void ShowInitialPanels()
+    {
+        modeSelectionPanel.SetActive(true);
+        fieldSizeChoosePanel.SetActive(true);
+        
+        UpdateFieldSizeText();
+        
+        if (enableUIAnimation)
+        {
+            modeSelectionPanel.transform.localScale = Vector3.zero;
+            modeSelectionPanel.transform.DOScale(1f, uiAnimDuration * 2f).SetEase(Ease.OutBack);
+            
+            fieldSizeChoosePanel.transform.localScale = Vector3.zero;
+            fieldSizeChoosePanel.transform.DOScale(1f, uiAnimDuration * 2f).SetEase(Ease.OutBack).SetDelay(0.1f);
+        }
+    }
+
+    private void ChangeFieldSize(int delta)
+    {
+        boardRadius = Mathf.Clamp(boardRadius + delta, minFieldSize, maxFieldSize);
+        UpdateFieldSizeText();
+    }
+
+    private void UpdateFieldSizeText()
+    {
+        txtFieldSize.text = boardRadius.ToString();
+        
+        if (enableUIAnimation)
+        {
+            txtFieldSize.transform.DOPunchScale(Vector3.one * 0.3f, uiAnimDuration, 5, 0.5f);
+        }
     }
 
     private void AddButtonAnimation(Button button)
@@ -130,37 +179,52 @@ public class GameManager : MonoBehaviour
         });
     }
 
-    private void ShowModeSelection()
-    {
-        modeSelectionPanel.SetActive(true);
-        if (enableUIAnimation)
-        {
-            modeSelectionPanel.transform.localScale = Vector3.zero;
-            modeSelectionPanel.transform.DOScale(1f, uiAnimDuration * 2f).SetEase(Ease.OutBack);
-        }
-    }
-
     private void StartGame(bool aiMode)
     {
         isAIMode = aiMode;
         
         if (enableUIAnimation)
         {
-            modeSelectionPanel.transform.DOScale(0f, uiAnimDuration).SetEase(Ease.InBack).OnComplete(() =>
+            Sequence hideSequence = DOTween.Sequence();
+            
+            hideSequence.Append(modeSelectionPanel.transform.DOScale(0f, uiAnimDuration).SetEase(Ease.InBack));
+            hideSequence.Join(fieldSizeChoosePanel.transform.DOScale(0f, uiAnimDuration).SetEase(Ease.InBack));
+            
+            hideSequence.OnComplete(() =>
             {
                 modeSelectionPanel.SetActive(false);
-                GenerateBoard();
-                SetupStartingPositions();
-                UpdateUI();
+                fieldSizeChoosePanel.SetActive(false);
+                StartCoroutine(GenerateBoardAndShowUI());
             });
         }
         else
         {
             modeSelectionPanel.SetActive(false);
-            GenerateBoard();
-            SetupStartingPositions();
-            UpdateUI();
+            fieldSizeChoosePanel.SetActive(false);
+            StartCoroutine(GenerateBoardAndShowUI());
         }
+    }
+
+    private IEnumerator GenerateBoardAndShowUI()
+    {
+        GenerateBoard();
+        SetupStartingPositions();
+        
+        yield return new WaitForSeconds(placementDuration);
+        
+        animalSelectionPanel.SetActive(true);
+        currentPlayerPanel.SetActive(true);
+        
+        if (enableUIAnimation)
+        {
+            animalSelectionPanel.transform.localScale = Vector3.zero;
+            animalSelectionPanel.transform.DOScale(1f, uiAnimDuration * 1.5f).SetEase(Ease.OutBack);
+            
+            currentPlayerPanel.transform.localScale = Vector3.zero;
+            currentPlayerPanel.transform.DOScale(1f, uiAnimDuration * 1.5f).SetEase(Ease.OutBack).SetDelay(0.1f);
+        }
+        
+        UpdateUI();
     }
 
     private void GenerateBoard()
@@ -188,7 +252,6 @@ public class GameManager : MonoBehaviour
                     tile.coordinates = coord;
                     board[coord] = tile;
 
-                    // Анимация появления доски
                     if (enablePlacementAnimation)
                     {
                         tile.transform.localScale = Vector3.zero;
@@ -226,7 +289,7 @@ public class GameManager : MonoBehaviour
         {
             if (board.TryGetValue(startPositions[i], out HexTile tile))
             {
-                tile.SetState(startPlayers[i], startAnimals[i], isInitial: true); // Тепер передаємо прапорець
+                tile.SetState(startPlayers[i], startAnimals[i], isInitial: true);
             }
         }
     }
@@ -272,7 +335,6 @@ public class GameManager : MonoBehaviour
     {
         isAnimating = true;
 
-        // 1. Анимация размещения фишки
         tile.SetState(player, animal);
         
         if (enablePlacementAnimation)
@@ -283,14 +345,12 @@ public class GameManager : MonoBehaviour
         PlaySound(placementSound);
         SpawnParticles(placementParticles, tile.transform.position);
 
-        // 2. Получаем захваченные фишки
         List<HexTile> outflankedTiles = GetOutflankedTiles(tile.coordinates, player);
         List<HexTile> dominatedTiles = GetDominatedTiles(tile.coordinates, player, animal);
         List<HexTile> allCaptured = new List<HexTile>();
         allCaptured.AddRange(outflankedTiles);
         allCaptured.AddRange(dominatedTiles);
 
-        // 3. Анимация захвата
         if (allCaptured.Count > 0)
         {
             if (enableCameraShake && mainCamera != null)
@@ -318,7 +378,6 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // 4. Zoom эффект для важных ходов
         if (enableCameraZoom && allCaptured.Count >= 3 && mainCamera != null)
         {
             float targetSize = originalCameraSize * zoomAmount;
@@ -328,16 +387,13 @@ public class GameManager : MonoBehaviour
             });
         }
 
-        // 5. Обновление UI и смена хода
         SwitchPlayer();
         UpdateUI();
 
-        // 6. Проверка конца игры
         CheckGameEnd();
 
         isAnimating = false;
 
-        // 7. AI ход
         if (isAIMode && currentPlayer == Player.PlayerB && !gameEnded)
         {
             yield return new WaitForSeconds(0.5f);
@@ -405,7 +461,11 @@ public class GameManager : MonoBehaviour
 
     private void UpdateUI()
     {
-        txtCurrentPlayer.text = $"{currentPlayer} Turn";
+        string playerAName = "Player A";
+        string playerBName = isAIMode ? "Bot" : "Player B";
+        
+        string currentPlayerName = currentPlayer == Player.PlayerA ? playerAName : playerBName;
+        txtCurrentPlayer.text = $"{currentPlayerName} Turn";
         
         int scoreA = board.Values.Count(t => t.Owner == Player.PlayerA);
         int scoreB = board.Values.Count(t => t.Owner == Player.PlayerB);
@@ -455,7 +515,12 @@ public class GameManager : MonoBehaviour
         int scoreA = board.Values.Count(t => t.Owner == Player.PlayerA);
         int scoreB = board.Values.Count(t => t.Owner == Player.PlayerB);
 
-        string winner = scoreA > scoreB ? "Player A Wins!" : scoreB > scoreA ? "Player B Wins!" : "Draw!";
+        string playerAName = isAIMode ? "Player" : "Player A";
+        string playerBName = isAIMode ? "Bot" : "Player B";
+        
+        string winner = scoreA > scoreB ? $"{playerAName} Wins!" : 
+                       scoreB > scoreA ? $"{playerBName} Wins!" : 
+                       "Draw!";
         txtVictoryMessage.text = $"{winner}\nScore: {scoreA} - {scoreB}";
         
         victoryPanel.SetActive(true);
@@ -491,19 +556,30 @@ public class GameManager : MonoBehaviour
     {
         gameEnded = false;
         currentPlayer = Player.PlayerA;
+        boardRadius = 3;
         
         if (enableUIAnimation)
         {
-            victoryPanel.transform.DOScale(0f, uiAnimDuration).SetEase(Ease.InBack).OnComplete(() =>
+            Sequence hideSequence = DOTween.Sequence();
+            
+            hideSequence.Append(victoryPanel.transform.DOScale(0f, uiAnimDuration).SetEase(Ease.InBack));
+            hideSequence.Join(currentPlayerPanel.transform.DOScale(0f, uiAnimDuration).SetEase(Ease.InBack));
+            hideSequence.Join(animalSelectionPanel.transform.DOScale(0f, uiAnimDuration).SetEase(Ease.InBack));
+            
+            hideSequence.OnComplete(() =>
             {
                 victoryPanel.SetActive(false);
-                ShowModeSelection();
+                currentPlayerPanel.SetActive(false);
+                animalSelectionPanel.SetActive(false);
+                ShowInitialPanels();
             });
         }
         else
         {
             victoryPanel.SetActive(false);
-            ShowModeSelection();
+            currentPlayerPanel.SetActive(false);
+            animalSelectionPanel.SetActive(false);
+            ShowInitialPanels();
         }
     }
 
