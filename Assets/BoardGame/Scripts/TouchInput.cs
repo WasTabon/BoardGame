@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class TouchInput : MonoBehaviour
 {
@@ -17,13 +18,21 @@ public class TouchInput : MonoBehaviour
             Touch touch = Input.GetTouch(0);
             if (touch.phase == TouchPhase.Began)
             {
-                RaycastToTile(touch.position);
+                // Проверяем, не попали ли мы по UI
+                if (!IsPointerOverUI(touch.position))
+                {
+                    RaycastToTile(touch.position);
+                }
             }
         }
-        // ПК клик (дублирование для надежности)
+        // ПК клик
         else if (Input.GetMouseButtonDown(0))
         {
-            RaycastToTile(Input.mousePosition);
+            // Проверяем, не попали ли мы по UI
+            if (!IsPointerOverUI(Input.mousePosition))
+            {
+                RaycastToTile(Input.mousePosition);
+            }
         }
     }
 
@@ -39,6 +48,29 @@ public class TouchInput : MonoBehaviour
             {
                 GameManager.Instance.OnTileClicked(tile);
             }
+        }
+    }
+
+    /// <summary>
+    /// Проверяет, находится ли указатель над UI элементом
+    /// </summary>
+    private bool IsPointerOverUI(Vector2 screenPosition)
+    {
+        // Для мобильных устройств (тач)
+        if (Input.touchCount > 0)
+        {
+            PointerEventData eventData = new PointerEventData(EventSystem.current);
+            eventData.position = screenPosition;
+            
+            var results = new System.Collections.Generic.List<RaycastResult>();
+            EventSystem.current.RaycastAll(eventData, results);
+            
+            return results.Count > 0;
+        }
+        // Для ПК (мышь)
+        else
+        {
+            return EventSystem.current.IsPointerOverGameObject();
         }
     }
 }

@@ -185,8 +185,6 @@ public class HexTile : MonoBehaviour
             pos.y = 0.5f;
             currentAnimal.transform.localPosition = pos;
             
-            Debug.Log($"[{animalType}] Final correct position: {correctPosition}");
-            
             UpdateOutline();
         }
     }
@@ -199,8 +197,6 @@ public class HexTile : MonoBehaviour
         {
             tileTop.y = tileRenderer.bounds.max.y;
         }
-
-        Debug.Log($"[{animalType}] Tile top Y: {tileTop.y}");
 
         if (currentAnimal == null)
         {
@@ -221,9 +217,7 @@ public class HexTile : MonoBehaviour
             Vector3 finalPosition = tileTop;
             //finalPosition.y = tileTop.y + yOffset;
             finalPosition.y = yOffset;
-
-            Debug.Log($"[{animalType}] Initial animal - using simple offset: {yOffset}, final Y: {finalPosition.y}");
-
+            
             return finalPosition;
         }
 
@@ -233,14 +227,12 @@ public class HexTile : MonoBehaviour
         
         if (colliders.Length == 0)
         {
-            Debug.LogWarning($"No BoxCollider on {animalType}!");
             return tileTop;
         }
 
         foreach (var collider in colliders)
         {
             float colliderBottom = collider.bounds.min.y;
-            Debug.Log($"[{animalType}] Collider '{collider.name}': bounds.min.y = {colliderBottom}");
             
             if (colliderBottom < lowestWorldY)
             {
@@ -248,17 +240,10 @@ public class HexTile : MonoBehaviour
             }
         }
 
-        Debug.Log($"[{animalType}] Lowest world Y: {lowestWorldY}");
-        Debug.Log($"[{animalType}] Animal center Y: {currentAnimal.transform.position.y}");
-
         float offsetFromCenter = currentAnimal.transform.position.y - lowestWorldY;
-        
-        Debug.Log($"[{animalType}] Offset from center: {offsetFromCenter}");
 
         Vector3 finalPos = tileTop;
         finalPos.y = tileTop.y + offsetFromCenter + animalHeightOffset;
-
-        Debug.Log($"[{animalType}] Final position Y: {finalPos.y}");
 
         return finalPos;
     }
@@ -290,12 +275,6 @@ public class HexTile : MonoBehaviour
                 }
             }
         }
-    }
-
-    private void OnMouseDown()
-    {
-        if (GameManager.Instance != null && !GameManager.Instance.IsAnimating)
-            GameManager.Instance.OnTileClicked(this);
     }
 
     private void OnMouseEnter()
