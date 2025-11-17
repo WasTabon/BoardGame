@@ -12,23 +12,19 @@ public class TouchInput : MonoBehaviour
 
     private void Update()
     {
-        // Мобильный тач
         if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
             if (touch.phase == TouchPhase.Began)
             {
-                // Проверяем, не попали ли мы по UI
                 if (!IsPointerOverUI(touch.position))
                 {
                     RaycastToTile(touch.position);
                 }
             }
         }
-        // ПК клик
         else if (Input.GetMouseButtonDown(0))
         {
-            // Проверяем, не попали ли мы по UI
             if (!IsPointerOverUI(Input.mousePosition))
             {
                 RaycastToTile(Input.mousePosition);
@@ -51,12 +47,8 @@ public class TouchInput : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Проверяет, находится ли указатель над UI элементом
-    /// </summary>
     private bool IsPointerOverUI(Vector2 screenPosition)
     {
-        // Для мобильных устройств (тач)
         if (Input.touchCount > 0)
         {
             PointerEventData eventData = new PointerEventData(EventSystem.current);
@@ -67,7 +59,6 @@ public class TouchInput : MonoBehaviour
             
             return results.Count > 0;
         }
-        // Для ПК (мышь)
         else
         {
             return EventSystem.current.IsPointerOverGameObject();
