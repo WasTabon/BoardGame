@@ -399,13 +399,13 @@ public class GameManager : MonoBehaviour
 
         tile.SetState(player, animal);
         
+        PlaySound(placementSound);
+        SpawnParticles(placementParticles, tile.transform.position);
+        
         if (enablePlacementAnimation)
         {
             yield return StartCoroutine(tile.PlayPlacementAnimation(placementDuration));
         }
-
-        PlaySound(placementSound);
-        SpawnParticles(placementParticles, tile.transform.position);
 
         List<HexTile> outflankedTiles = GetOutflankedTiles(tile.coordinates, player);
         List<HexTile> dominatedTiles = GetDominatedTiles(tile.coordinates, player, animal);
