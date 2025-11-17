@@ -181,6 +181,9 @@ public class HexTile : MonoBehaviour
         {
             Vector3 correctPosition = GetAnimalGroundPosition();
             currentAnimal.transform.position = correctPosition;
+            Vector3 pos = currentAnimal.transform.localPosition;
+            pos.y = 0.5f;
+            currentAnimal.transform.localPosition = pos;
             
             Debug.Log($"[{animalType}] Final correct position: {correctPosition}");
             
@@ -216,7 +219,8 @@ public class HexTile : MonoBehaviour
             };
 
             Vector3 finalPosition = tileTop;
-            finalPosition.y = tileTop.y + yOffset;
+            //finalPosition.y = tileTop.y + yOffset;
+            finalPosition.y = yOffset;
 
             Debug.Log($"[{animalType}] Initial animal - using simple offset: {yOffset}, final Y: {finalPosition.y}");
 

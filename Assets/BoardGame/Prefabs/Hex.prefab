@@ -136,3 +136,7 @@ MonoBehaviour:
   enableHoverEffect: 0
   hoverHeight: 0.1
   hoverDuration: 0.2
+  animalHeightOffset: 0
+  initialTigerYOffset: 0.5
+  initialRabbitYOffset: 0.5
+  initialDragonYOffset: 0.5
