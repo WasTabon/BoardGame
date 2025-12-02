@@ -432,12 +432,16 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1249512970952906757, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
       propertyPath: m_Type
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1249512970952906757, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: dfe3e1a231457cc448d24eba222db20f, type: 3}
+    - target: {fileID: 1249512970952906757, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
+      propertyPath: m_PixelsPerUnitMultiplier
+      value: 2.5
+      objectReference: {fileID: 0}
     - target: {fileID: 1629636903640948074, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
       propertyPath: m_fontAsset
       value: 
@@ -449,6 +453,14 @@ PrefabInstance:
     - target: {fileID: 1629636903640948074, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
       propertyPath: m_hasFontAssetChanged
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1737572123460851674, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -844
+      objectReference: {fileID: 0}
+    - target: {fileID: 1737572123460851674, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -328.12
       objectReference: {fileID: 0}
     - target: {fileID: 1938343125336889134, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
       propertyPath: m_Pivot.x
@@ -562,6 +574,14 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3519829183558279096, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+    - target: {fileID: 3519829183558279096, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 4386888208490337060, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -574,6 +594,14 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7157013633834799422, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+    - target: {fileID: 7157013633834799422, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 2395944477604651069, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
@@ -590,17 +618,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1938343125336889134, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
   m_PrefabInstance: {fileID: 54326638}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &54326641 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3519829183558279096, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
-  m_PrefabInstance: {fileID: 54326638}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &54326642 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2454533119435705901, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
@@ -3026,10 +3043,49 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tutorialPanel: {fileID: 54326639}
-  tutorialText: {fileID: 54326641}
+  tutorialText: {fileID: 1226554186}
   nextButton: {fileID: 54326642}
   nextButtonText: {fileID: 54326643}
-  tutorialSteps: []
+  tutorialSteps:
+  - stepText: Build your animal kingdom on a hexagonal board! Place your animals
+      strategically to dominate the board and win.
+    objectsToActivate: []
+    objectsToDeactivate: []
+  - stepText: Choose from three powerful animals:Tiger - Strong and fierceRabbit
+      - Quick and cleverDragon - Mighty and magical
+    objectsToActivate: []
+    objectsToDeactivate: []
+  - stepText: 'Tiger beats Rabbit
+
+      Rabbit beats Dragon
+
+      Dragon beats
+      Tiger
+
+      Remember this cycle - it''s the key to victory!'
+    objectsToActivate: []
+    objectsToDeactivate: []
+  - stepText: Tap any empty hex tile to place your animal. When you place an animal
+      next to your opponent's weaker animal, you capture it! The captured tile becomes
+      yours.
+    objectsToActivate: []
+    objectsToDeactivate: []
+  - stepText: 'Create powerful combo moves! If you place your animal so that enemy
+      animals form a straight line between two of your animals, all enemies in that
+      line flip to your side.
+
+      Example: Your animal - Enemy - Enemy - Enemy
+      - Your animal = All three enemies become yours!'
+    objectsToActivate: []
+    objectsToDeactivate: []
+  - stepText: Control the board by creating chains and lines. Capture your opponent's
+      tiles by surrounding them with stronger animals or trapping them in lines.
+      The player who dominates the most territory wins!
+    objectsToActivate: []
+    objectsToDeactivate: []
+  - stepText: Think ahead, plan your moves, and become the ultimate animal master!
+    objectsToActivate: []
+    objectsToDeactivate: []
 --- !u!1 &1106133307
 GameObject:
   m_ObjectHideFlags: 0
@@ -3546,6 +3602,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1223560365}
   m_CullTransparentMesh: 1
+--- !u!114 &1226554186 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7157013633834799422, guid: bdc425bb53608f847890f55c857e1e30, type: 3}
+  m_PrefabInstance: {fileID: 54326638}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1288176337
 GameObject:
   m_ObjectHideFlags: 0
